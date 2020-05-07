@@ -283,34 +283,33 @@ static NSMutableArray *tasks;
         }];
     }
     
+//	NSDictionary <NSString *, NSString *> *headers = BANetManagerShare.sessionManager.requestSerializer.HTTPRequestHeaders;
     if (type == BAHttpRequestTypeGet)
     {
-        sessionTask = [BANetManagerShare.sessionManager GET:URLString parameters:parameters  progress:^(NSProgress * _Nonnull downloadProgress) {
-            
-        } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
-            
-            if (successBlock)
+		sessionTask = [BANetManagerShare.sessionManager dataTaskWithHTTPMethod:@"GET" URLString:URLString parameters:parameters headers:nil uploadProgress:^(NSProgress * _Nonnull uploadProgress) {
+			
+		} downloadProgress:^(NSProgress * _Nonnull downloadProgress) {
+			
+		} success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+			if (successBlock)
             {
                 successBlock(responseObject);
             }
             // 对数据进行异步缓存
             [BANetManagerCache ba_setHttpCache:responseObject urlString:urlString parameters:parameters];
             [[weakSelf tasks] removeObject:sessionTask];
-            
-        } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
-            
-            if (failureBlock)
+		} failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+			if (failureBlock)
             {
                 failureBlock(error);
             }
             [[weakSelf tasks] removeObject:sessionTask];
-            
-        }];
+		}];
     }
     else if (type == BAHttpRequestTypePost)
     {
-        sessionTask = [BANetManagerShare.sessionManager POST:URLString parameters:parameters progress:^(NSProgress * _Nonnull uploadProgress) {
-            if (BANetManagerShare.isOpenLog)
+		sessionTask = [BANetManagerShare.sessionManager dataTaskWithHTTPMethod:@"POST" URLString:URLString parameters:parameters headers:nil uploadProgress:^(NSProgress * _Nonnull uploadProgress) {
+			if (BANetManagerShare.isOpenLog)
             {
                 NSLog(@"上传进度--%lld, 总进度---%lld",uploadProgress.completedUnitCount,uploadProgress.totalUnitCount);
             }
@@ -321,8 +320,10 @@ static NSMutableArray *tasks;
                     progressBlock(uploadProgress.completedUnitCount, uploadProgress.totalUnitCount);
                 }
             });
-        } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
-            if (BANetManagerShare.isOpenLog)
+		} downloadProgress:^(NSProgress * _Nonnull downloadProgress) {
+			
+		} success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+			if (BANetManagerShare.isOpenLog)
             {
                 NSLog(@"post 请求数据结果： *** %@", responseObject);
             }
@@ -334,62 +335,65 @@ static NSMutableArray *tasks;
             // 对数据进行异步缓存
             [BANetManagerCache ba_setHttpCache:responseObject urlString:urlString parameters:parameters];
             [[weakSelf tasks] removeObject:sessionTask];
-            
-        } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
-            NSLog(@"错误信息：%@",error);
+		} failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+			NSLog(@"错误信息：%@",error);
 
             if (failureBlock)
             {
                 failureBlock(error);
             }
             [[weakSelf tasks] removeObject:sessionTask];
-            
-        }];
+		}];
     }
     else if (type == BAHttpRequestTypePut)
     {
-        sessionTask = [BANetManagerShare.sessionManager PUT:URLString parameters:parameters success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
-            
-            if (successBlock)
+		sessionTask = [BANetManagerShare.sessionManager dataTaskWithHTTPMethod:@"PUT" URLString:URLString parameters:parameters headers:nil uploadProgress:^(NSProgress * _Nonnull uploadProgress) {
+			
+		} downloadProgress:^(NSProgress * _Nonnull downloadProgress) {
+			
+		} success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+			if (successBlock)
             {
                 successBlock(responseObject);
             }
             
             [[weakSelf tasks] removeObject:sessionTask];
-            
-        } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
-            NSLog(@"错误信息：%@",error);
+		} failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+			NSLog(@"错误信息：%@",error);
             if (failureBlock)
             {
                 failureBlock(error);
             }
             [[weakSelf tasks] removeObject:sessionTask];
-            
-        }];
+		}];
     }
     else if (type == BAHttpRequestTypeDelete)
     {
-        sessionTask = [BANetManagerShare.sessionManager DELETE:URLString parameters:parameters success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
-            if (successBlock)
+		sessionTask = [BANetManagerShare.sessionManager dataTaskWithHTTPMethod:@"DELETE" URLString:URLString parameters:parameters headers:nil uploadProgress:^(NSProgress * _Nonnull uploadProgress) {
+			
+		} downloadProgress:^(NSProgress * _Nonnull downloadProgress) {
+			
+		} success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+			if (successBlock)
             {
                 successBlock(responseObject);
             }
             
             [[weakSelf tasks] removeObject:sessionTask];
-            
-        } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
-            NSLog(@"错误信息：%@",error);
+		} failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+			NSLog(@"错误信息：%@",error);
             if (failureBlock)
             {
                 failureBlock(error);
             }
             [[weakSelf tasks] removeObject:sessionTask];
-            
-        }];
+		}];
     }
     
     if (sessionTask)
     {
+		/*! 开始启动任务 */
+		[sessionTask resume];
         [[weakSelf tasks] addObject:sessionTask];
     }
     
@@ -509,8 +513,7 @@ static NSMutableArray *tasks;
         NSLog(@"请求头: %@\n请求方式: %@\n请求URL: %@\n请求param: %@\n\n",BANetManagerShare.sessionManager.requestSerializer.HTTPRequestHeaders, @"POST",URLString, imageEntity.parameters);
         NSLog(@"********************************************************");
     }
-    BAURLSessionTask *sessionTask = nil;
-    sessionTask = [BANetManagerShare.sessionManager POST:URLString parameters:imageEntity.parameters constructingBodyWithBlock:^(id<AFMultipartFormData>  _Nonnull formData) {
+	NSMutableURLRequest *request = [[AFHTTPRequestSerializer serializer] multipartFormRequestWithMethod:@"POST" URLString:URLString parameters:imageEntity.parameters constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
         /*! 出于性能考虑,将上传图片进行压缩 */
         [imageEntity.imageArray enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             
@@ -533,9 +536,11 @@ static NSMutableArray *tasks;
                 [self ba_uploadImageWithFormData:formData resizedImage:resizedImage imageType:imageEntity.imageType imageScale:imageEntity.imageScale fileNames:imageEntity.fileNames index:idx];
             }
         }];
-        
-    } progress:^(NSProgress * _Nonnull uploadProgress) {
-        if (BANetManagerShare.isOpenLog)
+    } error:nil];
+	
+    BAURLSessionTask *sessionTask = nil;
+	sessionTask = [BANetManagerShare.sessionManager uploadTaskWithStreamedRequest:request progress:^(NSProgress * _Nonnull uploadProgress) {
+		if (BANetManagerShare.isOpenLog)
         {
             NSLog(@"上传进度--%lld, 总进度---%lld",uploadProgress.completedUnitCount,uploadProgress.totalUnitCount);
         }
@@ -545,24 +550,29 @@ static NSMutableArray *tasks;
                 progressBlock(uploadProgress.completedUnitCount, uploadProgress.totalUnitCount);
             }
         });
-    } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
-        if (BANetManagerShare.isOpenLog)
-        {
-            NSLog(@"上传图片成功 = %@",responseObject);
-        }
-        if (successBlock) {
-            successBlock(responseObject);
-        }
-        
-        [[weakSelf tasks] removeObject:sessionTask];
-    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
-        NSLog(@"错误信息：%@",error);
-        if (failureBlock) {
-            failureBlock(error);
-        }
-        [[weakSelf tasks] removeObject:sessionTask];
-    }];
+	} completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
+		if (error) {
+			NSLog(@"错误信息：%@",error);
+			if (failureBlock) {
+				failureBlock(error);
+			}
+			[[weakSelf tasks] removeObject:sessionTask];
+		} else {
+			if (BANetManagerShare.isOpenLog)
+			{
+				NSLog(@"上传图片成功 = %@",responseObject);
+			}
+			if (successBlock) {
+				successBlock(responseObject);
+			}
+			
+			[[weakSelf tasks] removeObject:sessionTask];
+		}
+	}];
     
+	/*! 开始启动任务 */
+    [sessionTask resume];
+	
     if (sessionTask) {
         [[self tasks] addObject:sessionTask];
     }
@@ -617,14 +627,13 @@ static NSMutableArray *tasks;
         switch ([avAssetExport status]) {
             case AVAssetExportSessionStatusCompleted:
             {
-                [BANetManagerShare.sessionManager POST:fileEntity.urlString parameters:fileEntity.parameters constructingBodyWithBlock:^(id<AFMultipartFormData>  _Nonnull formData) {
-                    
-                    NSURL *filePathURL2 = [NSURL URLWithString:[NSString stringWithFormat:@"file://%@", outfilePath]];
+				NSMutableURLRequest *request = [[AFHTTPRequestSerializer serializer] multipartFormRequestWithMethod:@"POST" URLString:fileEntity.urlString parameters:fileEntity.parameters constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
+					NSURL *filePathURL2 = [NSURL URLWithString:[NSString stringWithFormat:@"file://%@", outfilePath]];
                     // 获得沙盒中的视频内容
                     [formData appendPartWithFileURL:filePathURL2 name:@"video" fileName:outfilePath mimeType:@"application/octet-stream" error:nil];
-                    
-                } progress:^(NSProgress * _Nonnull uploadProgress) {
-                    if (BANetManagerShare.isOpenLog)
+				} error:nil];
+				NSURLSessionUploadTask *uploadTask = [BANetManagerShare.sessionManager uploadTaskWithStreamedRequest:request progress:^(NSProgress * _Nonnull uploadProgress) {
+					if (BANetManagerShare.isOpenLog)
                     {
                         NSLog(@"上传进度--%lld, 总进度---%lld",uploadProgress.completedUnitCount,uploadProgress.totalUnitCount);
                     }
@@ -635,20 +644,23 @@ static NSMutableArray *tasks;
                             progressBlock(uploadProgress.completedUnitCount, uploadProgress.totalUnitCount);
                         }
                     });
-                } success:^(NSURLSessionDataTask * _Nonnull task, NSDictionary *  _Nullable responseObject) {
-                    NSLog(@"上传视频成功 = %@",responseObject);
-                    
-                    if (successBlock)
-                    {
-                        successBlock(responseObject);
-                    }
-                } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
-                    NSLog(@"上传视频失败 = %@", error);
-                    if (failureBlock)
-                    {
-                        failureBlock(error);
-                    }
-                }];
+				} completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
+					if (error) {
+						NSLog(@"上传视频失败 = %@", error);
+						if (failureBlock)
+						{
+							failureBlock(error);
+						}
+					} else {
+						NSLog(@"上传视频成功 = %@",responseObject);
+						
+						if (successBlock)
+						{
+							successBlock(responseObject);
+						}
+					}
+				}];
+				[uploadTask resume];
                 break;
             }
             default:
@@ -777,17 +789,17 @@ static NSMutableArray *tasks;
         NSLog(@"请求头: %@\n请求方式: %@\n请求URL: %@\n请求param: %@\n\n",BANetManagerShare.sessionManager.requestSerializer.HTTPRequestHeaders, @"uploadFile", fileEntity.urlString, fileEntity.parameters);
         NSLog(@"******************************************************");
     }
-    BAURLSessionTask *sessionTask = nil;
-    sessionTask = [BANetManagerShare.sessionManager POST:fileEntity.urlString parameters:fileEntity.parameters constructingBodyWithBlock:^(id<AFMultipartFormData>  _Nonnull formData) {
-        
+	NSMutableURLRequest *request = [[AFHTTPRequestSerializer serializer] multipartFormRequestWithMethod:@"POST" URLString:fileEntity.urlString parameters:fileEntity.parameters constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
         NSError *error = nil;
         [formData appendPartWithFileURL:[NSURL URLWithString:fileEntity.filePath] name:fileEntity.fileName error:&error];
         if (failureBlock && error)
         {
             failureBlock(error);
         }
-    } progress:^(NSProgress * _Nonnull uploadProgress) {
-        if (BANetManagerShare.isOpenLog)
+    } error:nil];
+    BAURLSessionTask *sessionTask = nil;
+	sessionTask = [BANetManagerShare.sessionManager uploadTaskWithStreamedRequest:request progress:^(NSProgress * _Nonnull uploadProgress) {
+		if (BANetManagerShare.isOpenLog)
         {
             NSLog(@"上传进度--%lld, 总进度---%lld",uploadProgress.completedUnitCount,uploadProgress.totalUnitCount);
         }
@@ -798,23 +810,21 @@ static NSMutableArray *tasks;
                 progressBlock(uploadProgress.completedUnitCount, uploadProgress.totalUnitCount);
             }
         });
-        
-    } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
-        
-        [[self tasks] removeObject:sessionTask];
-        if (successBlock)
-        {
-            successBlock(responseObject);
-        }
-        
-    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
-        
-        [[self tasks] removeObject:sessionTask];
-        if (failureBlock)
-        {
-            failureBlock(error);
-        }
-    }];
+	} completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
+		if (error) {
+			[[self tasks] removeObject:sessionTask];
+			if (failureBlock)
+			{
+				failureBlock(error);
+			}
+		} else {
+			[[self tasks] removeObject:sessionTask];
+			if (successBlock)
+			{
+				successBlock(responseObject);
+			}
+		}
+	}];
     
     /*! 开始启动任务 */
     [sessionTask resume];
@@ -930,7 +940,9 @@ static NSMutableArray *tasks;
     }
     else
     {
-        return [str stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+//        return [str stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+		NSCharacterSet *set = [NSCharacterSet URLHostAllowedCharacterSet];
+		return [str stringByAddingPercentEncodingWithAllowedCharacters:set];
     }
 }
 
