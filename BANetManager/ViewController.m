@@ -197,6 +197,7 @@ UIAlertAction *sureAction = [UIAlertAction actionWithTitle:@"确 定" style:UIAl
 #pragma mark - post
 - (IBAction)postData:(UIButton *)sender
 {
+	[BANetManagerShare setHttpHeaderFieldDictionary:@{@"CostomKey":@"666"}];
     [sender setTitle:@"post" forState:UIControlStateNormal];
     // 自定义超时设置
     BANetManagerShare.timeoutInterval = 15;
